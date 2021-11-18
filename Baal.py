@@ -143,11 +143,9 @@ def main(user, ifile, tipo):
             rows = df.shape[0]
             print_progress_bar(0, rows, prefix='* Progress:', suffix='Complete', length=50)
             for i, row in df.iterrows():
-                print(row["quantita"], row["barcode"], row["artista"])
+                print(row["preparato"], row["barcode"], row["artista"])
                 # cur.execute("UPDATE cd SET qta=? WHERE barcode=?", row["qta"], row["barcode"])
                 # print_progress_bar(i + 1, rows, prefix='* Loading Progress:', suffix='Complete', length=50)
-
-
         else:
             print("* Il file scelto non contiene i dati richiesti da questa modalità")
 
