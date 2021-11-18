@@ -9,6 +9,7 @@ import sys
 import click
 from datetime import datetime
 from getpass import getpass
+import tabula
 
 
 def print_progress_bar(iteration, total, prefix='', suffix='', decimals=1, length=100, fill='█', print_end="\r"):
@@ -57,6 +58,8 @@ class Album:
 @click.option("-f", "--file", "ifile", help="File da caricare")
 @click.option("-V", "--vendita", "tipo", flag_value="vendita", help="Carico il file nella tabella 'ordini_online'")
 @click.option("-A", "--acquisti", "tipo", flag_value="acquisti", help="Carico il file nella tabella 'cd' ")
+@click.option("-Q", "--quantita", "tipo", flag_value="quantita",
+              help="Aggiorna le quantita' in base alla fattura fornita")
 @click.option("-I", "--inventario", "tipo", flag_value="inventario", help="Carico il file nella tabella 'online_shop'")
 def main(user, ifile, tipo):
     global conn
@@ -64,7 +67,7 @@ def main(user, ifile, tipo):
         if tipo is None:
             click.secho("***********************************************************************\n"
                         "* Attenzione! Heavy Loader ha bisogno di più parametri per funzionare *\n"
-                        "* E' necessario scegliere una modalità di esecuzione: -V, -A, -I      *\n"   
+                        "* E' necessario scegliere una modalità di esecuzione: -V, -A, -I      *\n"
                         "* usare l'opzione --help per leggere il funzionamento dello script.   *\n"
                         "***********************************************************************", fg='red')
             sys.exit(1)
@@ -78,11 +81,11 @@ def main(user, ifile, tipo):
                     fg='green', bold=True)
         click.secho("* Authorization needed: please insert password", fg='red', blink=True)
 
-        password = getpass("* Password:")
-        click.secho("* Connecting to database:")
+        # password = getpass("* Password:")
+        # click.secho("* Connecting to database:")
         conn = mariadb.connect(
             user=user,
-            password=password,
+            password="Angr4MAynu",
             host="192.168.1.24",
             port=3306,
             database="magazzino"
@@ -91,7 +94,7 @@ def main(user, ifile, tipo):
         click.secho("* " + now.strftime("%H:%M:%S") + " Connection OK", fg='green')
 
         cur = conn.cursor()
-        df = pandas.read_csv(ifile)
+        df = pandas.read_csv(ifile, encoding="utf-8")
         now = datetime.now()
         click.secho("* " + now.strftime("%H:%M:%S") + " File parsed", fg='green')
 
@@ -131,9 +134,20 @@ def main(user, ifile, tipo):
                                 "format, release_id, price, listed, comments, media_condition, sleeve_condition,"
                                 "weight, location) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ",
                                 (r["listing_id"], r["artist"], r["title"], r["label"], r["catno"], r["format"],
-                                r["release_id"], r["price"], r["listed"], r["comments"], r["media_condition"],
-                                r["sleeve_condition"], r["weight"], r["location"]))
+                                 r["release_id"], r["price"], r["listed"], r["comments"], r["media_condition"],
+                                 r["sleeve_condition"], r["weight"], r["location"]))
                     print_progress_bar(i + 1, rows, prefix='* Loading Progress:', suffix='Complete', length=50)
+
+        elif tipo == "quantita":
+            # print(df)
+            rows = df.shape[0]
+            print_progress_bar(0, rows, prefix='* Progress:', suffix='Complete', length=50)
+            for i, row in df.iterrows():
+                print(row["quantita"], row["barcode"], row["artista"])
+                # cur.execute("UPDATE cd SET qta=? WHERE barcode=?", row["qta"], row["barcode"])
+                # print_progress_bar(i + 1, rows, prefix='* Loading Progress:', suffix='Complete', length=50)
+
+
         else:
             print("* Il file scelto non contiene i dati richiesti da questa modalità")
 
